@@ -27,12 +27,20 @@ const PORT = process.env.PORT || 5000;
 app.use(helmet());
 
 // CORS — allow the frontend origin (set FRONTEND_URL in env for production)
-const allowedOrigins = process.env.FRONTEND_URL
-  ? [process.env.FRONTEND_URL, 'http://localhost:3000']
-  : ['http://localhost:3000'];
+const allowedOrigins = [
+  'http://localhost:3000',
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+];
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (same-origin, mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.some(o => origin.endsWith('.vercel.app'))) {
+      return callback(null, true);
+    }
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 }));
 
@@ -45,10 +53,11 @@ const limiter = rateLimit({
   windowMs: 60 * 1000,
   limit: process.env.NODE_ENV === 'development' ? 1000 : 100,
   standardHeaders: 'draft-7',
-  legacyHeaders: false
+  legacyHeaders: false,
+  validate: { trustProxy: false }
 });
-// Only trust proxy in production behind a real proxy/load balancer
-app.set('trust proxy', process.env.NODE_ENV === 'production');
+// Only trust proxy in production behind a real proxy/load balancer (Vercel uses 1 proxy hop)
+app.set('trust proxy', process.env.NODE_ENV === 'production' ? 1 : false);
 app.use(limiter);
 
 // Database connection
