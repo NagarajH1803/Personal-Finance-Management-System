@@ -82,7 +82,13 @@ app.use('/api/crypto', cryptoRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Finance Management API is running' });
+  res.json({ 
+    status: 'OK', 
+    message: 'Finance Management API is running',
+    dbState: mongoose.connection.readyState,
+    hasMongoUri: !!process.env.MONGODB_URI,
+    mongoUriPrefix: process.env.MONGODB_URI ? process.env.MONGODB_URI.substring(0, 25) : 'none'
+  });
 });
 
 // Error handling middleware
