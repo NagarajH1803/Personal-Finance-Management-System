@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL ?? 'http://localhost:5000',
+  baseURL: process.env.REACT_APP_API_URL || '',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -30,7 +30,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       // Token expired or invalid
       localStorage.removeItem('token');
-      window.location.href = '/#/login';
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }
